@@ -112,5 +112,6 @@ export const SURAHS = [
   { "id": 111, "name": "المسد", "englishName": "Al-Masad", "versesCount": 5 },
   { "id": 112, "name": "الإخلاص", "englishName": "Al-Ikhlas", "versesCount": 4 },
   { "id": 113, "name": "الفلق", "englishName": "Al-Falaq", "versesCount": 5 },
-  { "id": 114, "name": "الناس", "englishName": "An-Nas", "versesCount": 6 }
+  { "id": 114, "name": "الناس", "englishName": "An-Nas", "versesCount": 6 },
+  { "id": 115, "name": "دعاء ختم القرآن", "englishName": "Dua Khatm Al-Quran", "versesCount": 0 }
 ];

@@ -3,16 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Play, ListMusic, Volume2, Heart, Share2, Info, ChevronDown, Cloud, Moon, BookOpen, Wifi, Menu, X, ChevronUp, FastForward, Rewind, Music } from "lucide-react";
 import { SURAHS } from "./surahData";
+import { LOCAL_QURAN } from "./quranText";
 
 const MURATTAL_RECITERS = [
   {
     id: "hosari",
     name: "محمود خليل الحصري",
     englishName: "Mahmoud Khalil Al-Hosari",
+    audioServer: "https://server13.mp3quran.net/husr/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/shsamirmostafa/sets/el-hosari-radio&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `وُلد الشيخ محمود خليل الحصري في غرة ذي الحجة سنة 1335 هـ الموافق 17 سبتمبر عام 1917 في قرية شبرا النملة التابعة لطنطا بمحافظة الغربية بمصر. كان والده قبل ولادته قد انتقل من محافظة الفيوم إلى هذه القرية التي ولد فيها. أدخله والده الكتاب في سن الرابعة ليدرس القرآن الكريم، وأتم حفظ القرآن الكريم في الثامنة من عمره. كان يذهب من قريته إلى المسجد الأحمدي بطنطا يومياً ليحفظ القرآن الكريم، ولما بلغ الثانية عشرة التحق بالمعهد الديني بطنطا. ثم تعلم القراءات العشر بعد ذلك في الأزهر الشريف.`,
     image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
@@ -21,73 +23,82 @@ const MURATTAL_RECITERS = [
     id: "minshawi",
     name: "محمد صديق المنشاوي",
     englishName: "Mohamed Siddiq Al-Minshawi",
+    audioServer: "https://server10.mp3quran.net/minsh/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/ahmedsherif1485/sets/5wqsv1d6xm8l&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `وُلد الشيخ محمد صديق المنشاوي في 20 يناير من عام 1920 في مدينة المنشأة التابعة لمحافظة سوهاج في صعيد مصر. نشأ في بيت علم وقرآن، حيث كان والده الشيخ صديق المنشاوي وجده الشيخ طيب المنشاوي من مشاهير قراء القرآن الكريم في زمانهما. بدأ رحلته مع القرآن الكريم في سن مبكرة جداً، حيث ألحقه والده بكتاب القرية، وأتم حفظ القرآن الكريم كاملاً وهو في سن الثامنة من عمره، مما أظهر نبوغاً مبكراً وموهبة فذة في الحفظ والأداء.`,
-    image: "https://picsum.photos/seed/minshawi/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "abdulbasit",
     name: "عبد الباسط عبد الصمد",
     englishName: "Abdul Basit Abdul Samad",
+    audioServer: "https://server7.mp3quran.net/basit/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/shsamirmostafa/sets/abd-elbaseet-muratal-radio&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: "الشيخ عبد الباسط عبد الصمد، الملقب بالحنجرة الذهبية وصوت مكة، أحد أشهر القراء في العالم الإسلامي، تميز بطول نفسه وقوة صوته وجمال نبرته. وُلد في قرية المراعزة التابعة لمدينة أرمنت بمحافظة قنا في صعيد مصر. حفظ القرآن الكريم في كتاب القرية وأتمه في سن العاشرة. التحق بالإذاعة المصرية عام 1951، وكانت أول تلاواته من سورة فاطر. سافر إلى العديد من دول العالم، وحصل على العديد من الأوسمة والتكريمات تقديراً لدوره في خدمة القرآن الكريم.",
-    image: "https://picsum.photos/seed/abdulbasit/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "banna",
     name: "محمود علي البنا",
     englishName: "Mahmoud Ali Al-Banna",
+    audioServer: "https://server8.mp3quran.net/banna/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/shsamirmostafa/sets/elbannaa-muratal-radio&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `وُلد الشيخ محمود علي البنا في 17 ديسمبر عام 1926 في قرية شبرا باص التابعة لمركز شبين الكوم بمحافظة المنوفية بمصر. حفظ القرآن الكريم في كتاب القرية على يد الشيخ موسى المنطاش، وأتم حفظه وهو في سن الحادية عشرة، ثم انتقل إلى مدينة طنطا ليدرس العلوم الشرعية بالجامع الأحمدي، وتلقى القراءات فيها على يد الشيخ إبراهيم بن شحاتة السمنودي.`,
-    image: "https://picsum.photos/seed/banna/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "ismail",
     name: "مصطفى إسماعيل",
     englishName: "Mustafa Ismail",
+    audioServer: "https://server8.mp3quran.net/mustafa/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/bshlw5ozyhpe/sets/umjtxtq0un0u&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `وُلد الشيخ مصطفى إسماعيل في 17 يونيو عام 1905 في قرية ميت غزال التابعة لمركز السنطة بمحافظة الغربية بمصر. حفظ القرآن الكريم في كتاب القرية وهو لم يتجاوز الثانية عشرة من عمره، ثم التحق بالمعهد الأحمدي بطنطا ليتم حفظ القرآن وتجويده وقراءاته.`,
-    image: "https://picsum.photos/seed/mustafaismail/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "rifaat",
     name: "محمد رفعت",
     englishName: "Mohamed Rifaat",
-    playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/shsamirmostafa/sets/mohamed-rifaat-radio&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
+    audioServer: "https://server14.mp3quran.net/rifat/",
+    playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/islamic-radio/sets/mohamed-rifaat&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `وُلد الشيخ محمد رفعت في 9 مايو عام 1882 في حي المغربلين بالقاهرة. فقد بصره وهو في سن الثانية من عمره، لكن ذلك لم يمنعه من حفظ القرآن الكريم وتجويده في سن مبكرة جداً.`,
-    image: "https://picsum.photos/seed/mohamedrifaat/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "jebril",
     name: "محمد جبريل",
     englishName: "Mohamed Jebril",
+    audioServer: "https://server8.mp3quran.net/jbrl/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/user51139184/sets/lzdjcmfez7xx&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `الشيخ محمد جبريل، أحد أشهر قراء القرآن الكريم في مصر والعالم الإسلامي، وُلد في قرية طحوريا بمركز شبين القناطر بمحافظة القليوبية. حفظ القرآن الكريم في سن التاسعة، وحصل على العديد من الجوائز في المسابقات القرآنية.`,
-    image: "https://picsum.photos/seed/mohamedjebril/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "alnafis",
     name: "أحمد النفيس",
     englishName: "Ahmed Al-Nafis",
+    audioServer: "https://server12.mp3quran.net/ahmed_al_nefees/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/ibrahimasim/sets/yn2n2gacn8jy&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `القارئ أحمد النفيس، من القراء الكويتيين المعاصرين المتميزين بصوت عذب وأداء هادئ يبعث على الطمأنينة. اشتهر بتلاواته الخاشعة التي انتشرت بشكل واسع عبر وسائل التواصل الاجتماعي، وأصبح له جمهور كبير من المحبين في مختلف أنحاء العالم الإسلامي.`,
-    image: "https://picsum.photos/seed/alnafis/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "alafasy",
     name: "مشاري العفاسي",
     englishName: "Mishary Alafasy",
+    audioServer: "https://server8.mp3quran.net/afs/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/junaid-ur-rahman-26/sets/mishary-rashid-alafasy-quran&color=%230a192f&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `الشيخ مشاري بن راشد العفاسي، إمام المسجد الكبير بدولة الكويت وخطيب في وزارة الأوقاف والشؤون الإسلامية بدولة الكويت، صاحب أول قناة إسلامية كويتية قناة العفاسي الفضائية. وقارئ القرآن الكريم ومنشد ديني كويتي. يتمتع بصوت عذب وقوة في التحكم بطبقات الصوت وروعة الأداء.`,
-    image: "https://picsum.photos/seed/alafasy/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   },
   {
     id: "sufi",
     name: "عبد الرشيد الصوفي",
     englishName: "Abdul Rashid Sufi",
+    audioServer: "https://server9.mp3quran.net/sufi/",
     playlistUrl: "https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/user-258834376/sets/1qrp5ejeiqq0&color=%23065f46&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false",
     description: `الشيخ عبد الرشيد بن علي بن عبد الرحمن الصوفي، قارئ صومالي الأصل، وُلد في الصومال ونشأ في بيئة علمية قرآنية. حفظ القرآن الكريم على يد والده الشيخ علي الصوفي، وأتم حفظه في سن مبكرة.`,
-    image: "https://picsum.photos/seed/sufi/800/800"
+    image: "https://i.ytimg.com/vi/001-al-fatiha-hos/maxresdefault.jpg"
   }
 ];
 
@@ -237,45 +248,160 @@ export default function App() {
   const [selectedRecitation, setSelectedRecitation] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedSurah, setSelectedSurah] = useState<any>(null);
+  const [isQuickListenDropdownOpen, setIsQuickListenDropdownOpen] = useState(false);
+  const [currentSurahAudioUrl, setCurrentSurahAudioUrl] = useState<string | null>(null);
   const [verses, setVerses] = useState<any[]>([]);
+  const [pages, setPages] = useState<any>({});
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [scrollSpeed, setScrollSpeed] = useState(1);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [activeMode, setActiveMode] = useState<'listening' | 'reading'>('listening');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let interval: any;
-    if (isAutoScrolling && scrollRef.current) {
-      interval = setInterval(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop += scrollSpeed;
-        }
-      }, 50);
-    }
-    return () => clearInterval(interval);
-  }, [isAutoScrolling, scrollSpeed]);
+  const DUA_KHATM_ALQURAN = `اللَّهُمَّ ارْحَمْنِي بِالْقُرْآنِ وَاجْعَلْهُ لِي إِمَامًا وَنُورًا وَهُدًى وَرَحْمَةً * اللَّهُمَّ ذَكِّرْنِي مِنْهُ مَا نَسِيتُ وَعَلِّمْنِي مِنْهُ مَا جَهِلْتُ وَارْزُقْنِي تِلَاوَتَهُ آنَاءَ اللَّيْلِ وَأَطْرَافَ النَّهَارِ وَاجْعَلْهُ لِي حُجَّةً يَا رَبَّ الْعَالَمِينَ * اللَّهُمَّ أَصْلِحْ لِي دِينِي الَّذِي هُوَ عِصْمَةُ أَمْرِي، وَأَصْلِحْ لِي دُنْيَايَ الَّتِي فِيهَا مَعَاشِي، وَأَصْلِحْ لِي آخِرَتِي الَّتِي فِيهَا مَعَادِي، وَاجْعَلِ الْحَيَاةَ زِيَادَةً لِي فِي كُلِّ خَيْرٍ وَاجْعَلِ الْمَوْتَ رَاحَةً لِي مِنْ كُلِّ شَرٍّ * اللَّهُمَّ اجْعَلْ خَيْرَ عُمْرِي آخِرَهُ وَخَيْرَ عَمَلِي خَوَاتِمَهُ وَخَيْرَ أَيَّامِي يَوْمَ أَلْقَاكَ فِيهِ * اللَّهُمَّ إِنِّي أَسْأَلُكَ عِيشَةً هَنِيَّةً وَمِيتَةً سَوِيَّةً وَمَرَدًّا غَيْرَ مُخْزٍ وَلَا فَاضِحٍ * اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ الْمَسْأَلَةِ وَخَيْرَ الدُّعَاءِ وَخَيْرَ النَّجَاحِ وَخَيْرَ الْعِلْمِ وَخَيْرَ الْعَمَلِ وَخَيْرَ الثَّوَابِ وَخَيْرَ الْحَيَاةِ وَخَيْرَ الْمَمَاتِ وَثَبِّتْنِي وَثَقِّلْ مَوَازِينِي وَحَقِّقْ إِيمَانِي وَارْفَعْ دَرَجَتِي وَتَقَبَّلْ صَلَاتِي وَاغْفِرْ خَطِيئَاتِي وَأَسْأَلُكَ الْعُلَا مِنَ الْجَنَّةِ * اللَّهُمَّ إِنِّي أَسْأَلُكَ مُوجِبَاتِ رَحْمَتِكَ وَعَزَائِمَ مَغْفِرَتِكَ وَالسَّلَامَةَ مِنْ كُلِّ إِثْمٍ وَالْغَنِيمَةَ مِنْ كُلِّ بِرٍّ وَالْفَوْزَ بِالْجَنَّةِ وَالنَّجاةَ مِنَ النَّارِ * اللَّهُمَّ أَحْسِنْ عَاقِبَتَنَا فِي الْأُمُورِ كُلِّهَا، وَأَجِرْنَا مِنْ خِزْيِ الدُّنْيَا وَعَذَابِ الْآخِرَةِ * اللَّهُمَّ اقْسِمْ لَنَا مِنْ خَشْيَتِكَ مَا تَحُولُ بِهِ بَيْنَنَا وَبَيْنَ مَعْصِيَتِكَ وَمِنْ طَاعَتِكَ مَا تُبَلِّغُنَا بِهَا جَنَّتَكَ وَمِنَ الْيَقِينِ مَا تُهَوِّنُ بِهِ عَلَيْنَا مَصَائِبَ الدُّنْيَا وَمَتِّعْنَا بِأَسْمَاعِنَا وَأَبْصَارِنَا وَقُوَّتِنَا مَا أَحْيَيْتَنَا وَاجْعَلْهُ الْوَارِثَ مِنَّا وَاجْعَلْ ثَأْرَنَا عَلَى مَنْ ظَلَمَنَا وَانْصُرْنَا عَلَى مَنْ عَادَانَا وَلَا تَجْعَلْ مُصِيبَتَنَا فِي دِينِنَا وَلَا تَجْعَلِ الدُّنْيَا أَكْبَرَ هَمِّنَا وَلَا مَبْلَغَ عِلْمِنَا وَلَا تُسَلِّطْ عَلَيْنَا مَنْ لَا يَرْحَمُنَا * اللَّهُمَّ لَا تَدَعْ لَنَا ذَنْبًا إِلَّا غَفَرْتَهُ وَلَا هَمًّا إِلَّا فَرَّجْتَهُ وَلَا دَيْنًا إِلَّا قَضَيْتَهُ وَلَا حَاجَةً مِنْ حَوَائِجِ الدُّنْيَا وَالْآخِرَةِ إِلَّا قَضَيْتَهَا يَا أَرْحَمَ الرَّاحِمِينَ * رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ وَصَلَّى اللهُ عَلَى نَبِيِّنَا مُحَمَّدٍ وَعَلَى آلِهِ وَأَصْحَابِهِ الْأَخْيَارِ وَسَلَّمَ تَسْلِيمًا كَثِيرًا.`;
 
-  const fetchVerses = async (surahId: number) => {
+  // Static logic to pre-calculate and "store" the audio URL for the selected Surah
+  // This ensures the app doesn't rely on any AI or external dynamic searching at runtime
+  useEffect(() => {
+    if (selectedSurah && selectedReciter && selectedReciter.audioServer) {
+      // Surah IDs are 1-114, padded to 3 digits (e.g., 001, 002...)
+      const surahIdStr = selectedSurah.id.toString().padStart(3, '0');
+      const url = `${selectedReciter.audioServer}${surahIdStr}.mp3`;
+      setCurrentSurahAudioUrl(url);
+    } else {
+      setCurrentSurahAudioUrl(null);
+    }
+  }, [selectedSurah, selectedReciter]);
+
+  const fetchVerses = useCallback(async (surahId: number) => {
+    if (surahId === 115) {
+      setVerses([{ text: DUA_KHATM_ALQURAN, numberInSurah: "", page: 604 }]);
+      setPages({ 604: [{ text: DUA_KHATM_ALQURAN, numberInSurah: "", page: 604 }] });
+      setIsLoadingVerses(false);
+      return;
+    }
+
+    // Check if we have the Surah locally first
+    if (LOCAL_QURAN[surahId]) {
+      const ayahs = LOCAL_QURAN[surahId];
+      setVerses(ayahs);
+      
+      const groupedPages: any = {};
+      ayahs.forEach((ayah: any) => {
+        if (!groupedPages[ayah.page]) {
+          groupedPages[ayah.page] = [];
+        }
+        groupedPages[ayah.page].push(ayah);
+      });
+      setPages(groupedPages);
+      setIsLoadingVerses(false);
+      return;
+    }
+
     setIsLoadingVerses(true);
     try {
-      const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahId}`);
+      // Using the Uthmani edition for the most authentic "paper Mushaf" script
+      const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahId}/quran-uthmani`);
       const data = await response.json();
-      setVerses(data.data.ayahs);
+      const ayahs = data.data.ayahs;
+      setVerses(ayahs);
+      
+      // Group by page
+      const groupedPages: any = {};
+      ayahs.forEach((ayah: any) => {
+        if (!groupedPages[ayah.page]) {
+          groupedPages[ayah.page] = [];
+        }
+        groupedPages[ayah.page].push(ayah);
+      });
+      setPages(groupedPages);
     } catch (error) {
       console.error("Error fetching verses:", error);
     } finally {
       setIsLoadingVerses(false);
     }
+  }, []);
+
+  const highlightQuranText = (text: string) => {
+    // 1. Highlight Names of Allah and Asma-ul-Husna in Yellow
+    const namesOfAllah = [
+      "ٱللَّهِ", "اللَّهِ", "ٱللَّهُ", "اللَّهُ", "ٱللَّهَ", "اللَّهَ", "لِلَّهِ", "ٱللَّه", "اللَّه",
+      "الرَّحْمَٰنِ", "الرَّحْمَنُ", "الرَّحِيمُ", "الْمَلِكُ", "الْقُدُّوسُ", "السَّلَامُ", "الْمُؤْمِنُ", "الْمُهَيْمِنُ", "الْعَزِيزُ", "الْجَبَّارُ", "الْمُتَكَبِّرُ", "الخَالِقُ", "الْبَارِئُ", "الْمُصَوِّرُ", "الْغَفَّارُ", "الْقَهَّارُ", "الْوَهَّابُ", "الرَّزَّاقُ", "الْفَتَّاحُ", "الْعَلِيمُ", "الْقَابِضُ", "الْبَاسِطُ", "الْخَافِضُ", "الرَّافِعُ", "الْمُعِزُّ", "الْمُذِلُّ", "السَّمِيعُ", "الْبَصِيرُ", "الْحَكَمُ", "الْعَدْلُ", "اللَّطِيفُ", "الْخَبِيرُ", "الْحَلِيمُ", "الْعَظِيمُ", "الْغَفُورُ", "الشَّكُورُ", "الْعَلِيُّ", "الْكَبِيرُ", "الْحَفِيظُ", "الْمُقِيتُ", "الْحَسِيبُ", "الْجَلِيلُ", "الْكَرِيمُ", "الرَّقِيبُ", "الْمُجِيبُ", "الْوَاسِعُ", "الْحَكِيمُ", "الْوَدُودُ", "الْمَجِيدُ", "الْبَاعِثُ", "الشَّهِيدُ", "الْحَقُّ", "الْوَكِيلُ", "الْقَوِيُّ", "الْمَتِينُ", "الْوَلِيُّ", "الْحَمِيدُ", "الْمُحْصِي", "الْمُبْدِئُ", "الْمُعِيدُ", "الْمُحْيِي", "الْمُمِيتُ", "الْحَيُّ", "الْقَيُّومُ", "الْوَاجِدُ", "الْمَاجِدُ", "الْوَاحِدُ", "الْأَحَدُ", "الصَّمَدُ", "الْقَادِرُ", "الْمُقْتَدِرُ", "الْمُؤَخِّرُ", "الْمُقَدِّمُ", "الْأَوَّلُ", "الْآخِرُ", "الظَّاهِرُ", "الْبَاطِنُ", "الْوَالِي", "الْمُتَعَالِي", "الْبَرُّ", "التَّوَّابُ", "الْمُنْتَقِمُ", "الْعَفُوُّ", "الرَّؤُوفُ", "مَالِكُ الْمُلْكِ", "ذُو الْجَلَالِ وَالْإِكْرَامِ", "الْمُقْسِطُ", "الْجَامِعُ", "الْغَنِيُّ", "الْمُغْنِي", "الْمَانِعُ", "الضَّارُّ", "النَّافِعُ", "النُّورُ", "الْهَادِي", "الْبَدِيعُ", "الْبَاقِي", "الوَارِثُ", "الرَّشِيدُ", "الصَّبُورُ"
+    ];
+    
+    // 2. Highlight Waqf Marks in Greenish-Gold
+    // ۖ (Salla), ۗ (Qalla), ۘ (Lazim), ۙ (Mamnu), ۚ (Ja'iz), ۛ (Mu'anaqah), ۜ (Saktah)
+    const waqfMarks = /([\u06D6\u06D7\u06D8\u06D9\u06DA\u06DB\u06DC])/g;
+
+    // Combine logic
+    const pattern = new RegExp(`(${namesOfAllah.join('|')})`, 'g');
+    const parts = text.split(pattern);
+    
+    return parts.map((part, i) => {
+      if (namesOfAllah.includes(part)) {
+        return <span key={i} className="text-[#D4AF37] drop-shadow-[0_0_5px_rgba(212,175,55,0.6)] font-bold">{part}</span>;
+      }
+      
+      // Handle Waqf marks inside the remaining parts
+      const subParts = part.split(waqfMarks);
+      return subParts.map((subPart, j) => 
+        waqfMarks.test(subPart) ? 
+          <span key={`${i}-${j}`} className="text-[#4ade80] font-normal mx-0.5 text-[0.9em]">{subPart}</span> : 
+          subPart
+      );
+    });
   };
 
-  const handleSurahClick = (surah: any) => {
+  const renderAyahText = (ayah: any, surahId: number) => {
+    let text = ayah.text;
+    // Remove Basmala from first ayah if it's not Al-Fatiha
+    if (ayah.numberInSurah === 1 && surahId !== 1 && surahId !== 9) {
+      const basmala = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
+      if (text.startsWith(basmala)) {
+        text = text.substring(basmala.length).trim();
+      }
+    }
+    return highlightQuranText(text);
+  };
+
+  const handleSurahClick = useCallback((surah: any) => {
     setSelectedSurah(surah);
     fetchVerses(surah.id);
     setIsAutoScrolling(false);
     setActiveMode('reading');
+    setIsSidebarOpen(false); // Close sidebar automatically
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
-  };
+  }, [fetchVerses]);
+
+  useEffect(() => {
+    let interval: any;
+    if (isAutoScrolling && scrollRef.current) {
+      interval = setInterval(() => {
+        if (scrollRef.current) {
+          const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+          
+          // Check if we've reached the bottom
+          if (scrollTop + clientHeight >= scrollHeight - 5) {
+            setIsAutoScrolling(false);
+            
+            // Find next surah
+            if (selectedSurah) {
+              const currentIndex = SURAHS.findIndex(s => s.id === selectedSurah.id);
+              if (currentIndex !== -1 && currentIndex < SURAHS.length - 1) {
+                const nextSurah = SURAHS[currentIndex + 1];
+                handleSurahClick(nextSurah);
+                // Re-enable auto-scrolling for the next surah after a short delay
+                setTimeout(() => setIsAutoScrolling(true), 2000);
+              }
+            }
+          } else {
+            scrollRef.current.scrollTop += scrollSpeed;
+          }
+        }
+      }, 50);
+    }
+    return () => clearInterval(interval);
+  }, [isAutoScrolling, scrollSpeed, selectedSurah, handleSurahClick]);
 
   const toggleDropdown = (name: string) => {
     setActiveDropdown(activeDropdown === name ? null : name);
@@ -479,9 +605,12 @@ export default function App() {
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-[#0a192f]/60 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden shadow-2xl"
+                className="bg-[#0a192f]/60 backdrop-blur-xl rounded-2xl border-4 border-[#D4AF37]/40 overflow-hidden shadow-2xl relative"
               >
-                <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                {/* Decorative Inner Border */}
+                <div className="absolute inset-2 border border-[#D4AF37]/20 rounded-xl pointer-events-none z-0" />
+                
+                <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5 relative z-10">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-white/50">السرعة:</span>
@@ -511,10 +640,110 @@ export default function App() {
                   </div>
                   <h3 className="text-lg font-bold text-[#D4AF37]">{selectedSurah.name}</h3>
                 </div>
+
+                {/* Quick Listen Section (Moved outside scrollable container) */}
+                <div className="bg-white/5 border-b border-[#D4AF37]/20 p-4 md:p-6">
+                  <div className="max-w-4xl mx-auto">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-2 text-[#D4AF37]">
+                        <Volume2 size={20} />
+                        <span className="text-md font-bold whitespace-nowrap">استمع لهذه السورة بصوت:</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-grow md:flex-grow-0">
+                          <button
+                            onClick={() => setIsQuickListenDropdownOpen(!isQuickListenDropdownOpen)}
+                            className="w-full md:w-64 px-4 py-2 bg-[#0a192f] border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-white flex items-center justify-between hover:border-[#D4AF37] transition-all shadow-lg"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Play size={14} className="text-[#D4AF37] fill-[#D4AF37]" />
+                              {selectedReciter ? selectedReciter.name : "اختر القارئ..."}
+                            </span>
+                            <ChevronDown size={16} className={`transition-transform ${isQuickListenDropdownOpen ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          <AnimatePresence>
+                            {isQuickListenDropdownOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute z-50 top-full right-0 mt-2 w-full md:w-64 bg-[#0a192f] border border-[#D4AF37]/30 rounded-xl shadow-2xl overflow-hidden"
+                              >
+                                <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                  {MURATTAL_RECITERS.map((reciter) => (
+                                    <button
+                                      key={reciter.id}
+                                      onClick={() => {
+                                        setSelectedReciter(reciter);
+                                        setIsQuickListenDropdownOpen(false);
+                                      }}
+                                      className={`w-full px-4 py-2.5 text-right text-sm font-bold transition-all hover:bg-white/5 flex items-center justify-between group ${selectedReciter?.id === reciter.id ? 'text-[#D4AF37] bg-white/5' : 'text-white/80'}`}
+                                    >
+                                      <span>{reciter.name}</span>
+                                      {selectedReciter?.id === reciter.id && <Volume2 size={14} />}
+                                    </button>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {selectedReciter && (
+                          <button 
+                            onClick={() => setSelectedReciter(null)}
+                            className="p-2 text-white/40 hover:text-white transition-colors"
+                            title="إغلاق المشغل"
+                          >
+                            <X size={20} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Embedded Player in Reading Mode */}
+                    {selectedReciter && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="mt-4 overflow-hidden rounded-xl border border-white/10 shadow-2xl bg-[#0a192f]/80 p-3"
+                      >
+                        {currentSurahAudioUrl && selectedSurah && selectedSurah.id <= 114 ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="text-[10px] text-[#D4AF37] font-bold">
+                              جاري تشغيل سورة {selectedSurah.name} بصوت {selectedReciter.name}
+                            </div>
+                            <audio 
+                              key={currentSurahAudioUrl}
+                              controls 
+                              autoPlay 
+                              className="w-full h-8 custom-audio-player"
+                              src={currentSurahAudioUrl}
+                            >
+                              متصفحك لا يدعم مشغل الصوت.
+                            </audio>
+                          </div>
+                        ) : (
+                          <iframe
+                            width="100%"
+                            height="120"
+                            scrolling="no"
+                            frameBorder="no"
+                            allow="autoplay"
+                            src={selectedReciter.playlistUrl.replace('auto_play=false', 'auto_play=true')}
+                            className="bg-transparent"
+                          />
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
                 
                 <div 
                   ref={scrollRef}
-                  className="h-[70vh] overflow-y-auto p-6 text-right space-y-4 custom-scrollbar relative"
+                  className="h-[60vh] overflow-y-auto p-6 text-right space-y-4 custom-scrollbar relative"
                   style={{ direction: 'rtl' }}
                 >
                   {isLoadingVerses ? (
@@ -522,11 +751,41 @@ export default function App() {
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]" />
                     </div>
                   ) : (
-                    <div className="text-3xl leading-[2] font-serif text-white/90">
-                      {verses.map((ayah, idx) => (
-                        <span key={idx} className="inline-block mb-8">
-                          {ayah.text} <span className="text-[#D4AF37] text-lg mx-2">({ayah.numberInSurah})</span>
-                        </span>
+                    <div className="space-y-12">
+                      {/* Basmala for non-Tawbah surahs */}
+                      {selectedSurah.id !== 9 && selectedSurah.id !== 115 && (
+                        <div className="text-center py-6">
+                          <div className="text-3xl font-serif text-[#D4AF37] drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]">
+                            بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                          </div>
+                        </div>
+                      )}
+
+                      {Object.keys(pages).sort((a, b) => Number(a) - Number(b)).map((pageNumber) => (
+                        <div key={pageNumber} className="min-h-full border-4 border-[#D4AF37]/30 rounded-2xl p-8 md:p-12 relative bg-white/5 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)] group">
+                          {/* Page Stack Effect Border */}
+                          <div className="absolute -inset-1 border border-[#D4AF37]/10 rounded-2xl pointer-events-none" />
+                          <div className="absolute -inset-2 border border-[#D4AF37]/5 rounded-2xl pointer-events-none" />
+                          
+                          {/* Corner Decorations */}
+                          <div className="absolute top-2 left-2 w-8 h-8 border-t-4 border-l-4 border-[#D4AF37] rounded-tl-xl opacity-60" />
+                          <div className="absolute top-2 right-2 w-8 h-8 border-t-4 border-r-4 border-[#D4AF37] rounded-tr-xl opacity-60" />
+                          <div className="absolute bottom-2 left-2 w-8 h-8 border-b-4 border-l-4 border-[#D4AF37] rounded-bl-xl opacity-60" />
+                          <div className="absolute bottom-2 right-2 w-8 h-8 border-b-4 border-r-4 border-[#D4AF37] rounded-br-xl opacity-60" />
+                          
+                          {/* Page Number */}
+                          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#0a192f] border border-[#D4AF37]/40 px-4 py-1 rounded-full text-xs text-[#D4AF37] z-20">
+                            صفحة {pageNumber}
+                          </div>
+
+                          <div className="text-[22px] font-bold leading-[3] font-serif text-white/80 text-justify">
+                            {pages[pageNumber].map((ayah: any, idx: number) => (
+                              <span key={idx} className="inline">
+                                {renderAyahText(ayah, selectedSurah.id)} <span className="text-[#D4AF37] text-lg mx-1 font-normal opacity-80">﴿{ayah.numberInSurah}﴾</span>{" "}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -727,7 +986,7 @@ export default function App() {
                       scrolling="yes"
                       frameBorder="no"
                       allow="autoplay"
-                      src={selectedReciter.playlistUrl}
+                      src={selectedReciter.playlistUrl.replace('auto_play=false', 'auto_play=true')}
                       className="absolute inset-0"
                     />
                   </div>
@@ -747,7 +1006,7 @@ export default function App() {
       {/* Footer */}
       <footer className="py-8 text-center opacity-70 border-t border-white/10 bg-transparent relative z-10">
         <p className="text-sm tracking-widest text-white/50 font-sans">
-          All rights reserved © for NagiWay StepUp AI
+          All rights reserved © for NagiWay StepUp
         </p>
       </footer>
     </div>
